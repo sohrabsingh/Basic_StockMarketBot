@@ -239,7 +239,7 @@ class StockMarketGUI:
 
 def main():
     root = tk.Tk()
-    api_key = "HHB2E7F9CS4GTSR1"  # Replace with your Alpha Vantage API key
+    api_key = "ALPHA_VANTAGE_API_KEY"  # Replace with your Alpha Vantage API key
     app = StockMarketGUI(root, api_key)
     root.mainloop()
 
