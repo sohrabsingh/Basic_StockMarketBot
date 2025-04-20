@@ -13,13 +13,15 @@ class StockMarketBot:
 
     def get_stock_data(self, symbol, period='1mo'):
         try:
-            if period == '1mo':
-                period = 'daily'
-            elif period == '3mo':
-                period = 'weekly'
-            elif period == '1y':
-                period = 'weekly'
-            data, meta_data = self.ts.get_daily(symbol=symbol, outputsize='full')
+            if period in ['1d', '5d']:
+                data, meta_data = self.ts.get_intraday(symbol=symbol, interval='60min', outputsize='full')
+            elif period == '1mo':
+                data, meta_data = self.ts.get_daily(symbol=symbol, outputsize='compact')
+            elif period in ['3mo', '6mo', '1y']:
+                data, meta_data = self.ts.get_weekly(symbol=symbol)
+            else:
+                messagebox.showerror("Error", f"Invalid period: {period}")
+                return None
             return data
         except Exception as e:
             print(f"Error fetching data for {symbol}: {str(e)}")
@@ -34,6 +36,7 @@ class StockMarketGUI:
         self.bot = StockMarketBot(api_key)
         self.current_symbol = ""
         self.update_interval = 60000
+        self.usd_to_inr = 82.5  # Example conversion rate, ideally fetch this dynamically
 
         self.input_frame = ttk.Frame(root, padding="10")
         self.input_frame.pack(fill=tk.X)
@@ -53,8 +56,8 @@ class StockMarketGUI:
         self.period_var = tk.StringVar(value="1mo")
         ttk.Label(self.input_frame, text="Period:").pack(side=tk.LEFT, padx=(10, 0))
         period_combo = ttk.Combobox(self.input_frame, textvariable=self.period_var,
-                                        values=["1d", "5d", "1mo", "3mo", "6mo", "1y"],
-                                        width=5)
+                                     values=["1d", "5d", "1mo", "3mo", "6mo", "1y"],
+                                     width=5)
         period_combo.pack(side=tk.LEFT, padx=5)
 
         ttk.Button(self.input_frame, text="Analyze", command=self.analyze_stock).pack(side=tk.LEFT, padx=10)
@@ -81,49 +84,38 @@ class StockMarketGUI:
         self.nlp_text.pack(fill=tk.BOTH, expand=True)
 
     def get_stock_data(self, symbol, period='1mo'):
-        try:
-            data = self.bot.get_stock_data(symbol, period)
-            if data is not None:
-                data = data.sort_index()
-                period_map = {
-                    '1d': 1,
-                    '5d': 5,
-                    '1mo': 30,
-                    '3mo': 90,
-                    '6mo': 180,
-                    '1y': 365
-                }
-                days = period_map.get(period, 90)
-                data = data.last(f'{days}D')
-                return data
-            return None
-        except Exception as e:
-            print(f"Error fetching data for {symbol}: {str(e)}")
-            return None
+        data = self.bot.get_stock_data(symbol, period)
+        if data is not None and not data.empty:
+            data = data.sort_index(ascending=True)
+            if period in ['1d', '5d']:
+                data.rename(columns={'1. open': 'Open', '2. high': 'High', '3. low': 'Low', '4. close': 'Close', '5. volume': 'Volume'}, inplace=True)
+            else:
+                data.rename(columns={'1. open': 'Open', '2. high': 'High', '3. low': 'Low', '4. close': 'Close', '5. volume': 'Volume'}, inplace=True)
+            return data
+        return None
 
     def plot_chart(self, data):
         self.figure.clear()
         gs = self.figure.add_gridspec(2, 1, height_ratios=[1, 1], hspace=0.3) # Adjust height ratios
 
         ax1 = self.figure.add_subplot(gs[0, 0])
-        ax1.plot(data.index, data['4. close'], label='Close Price', color='blue')
+        ax1.plot(data.index, data['Close'], label='Close Price', color='blue')
 
         # Calculate SMA
         sma_window = 20
-        sma = data['4. close'].rolling(window=sma_window).mean()
+        sma = data['Close'].rolling(window=sma_window).mean()
         ax1.plot(data.index, sma, label=f'SMA ({sma_window})', color='orange', linestyle='--')
 
         # Calculate Bollinger Bands
         window = 20
-        rolling_mean = data['4. close'].rolling(window=window).mean()
-        rolling_std = data['4. close'].rolling(window=window).std()
+        rolling_mean = data['Close'].rolling(window=window).mean()
+        rolling_std = data['Close'].rolling(window=window).std()
         upper_band = rolling_mean + (rolling_std * 2)
         lower_band = rolling_mean - (rolling_std * 2)
 
         ax1.plot(data.index, upper_band, label='Bollinger Upper', color='red', linestyle='--')
         ax1.plot(data.index, lower_band, label='Bollinger Lower', color='green', linestyle='--')
         ax1.fill_between(data.index, lower_band, upper_band, color='grey', alpha=0.2)
-
 
         ax1.set_title(f'{self.current_symbol} Stock Price with SMA and Bollinger Bands')
         ax1.set_xlabel('Date')
@@ -133,60 +125,79 @@ class StockMarketGUI:
 
         # Volume subplot
         ax2 = self.figure.add_subplot(gs[1, 0], sharex=ax1)
-        ax2.bar(data.index, data['5. volume'], label='Volume', color='skyblue')
+        ax2.bar(data.index, data['Volume'], label='Volume', color='skyblue')
         ax2.set_ylabel('Volume')
         ax2.grid(True)
         ax2.legend(loc='upper left')
 
-        # RSI subplot
-        # ax3 = self.figure.add_subplot(gs[2, 0], sharex=ax1)
-        # rsi_indicator = ta.momentum.RSIIndicator(close=data['4. close'], window=14)
-        # data['rsi'] = rsi_indicator.rsi()
-        # ax3.plot(data.index, data['rsi'], label='RSI (14)', color='purple')
-        # ax3.axhline(70, color='red', linestyle='--', alpha=0.5)
-        # ax3.axhline(30, color='green', linestyle='--', alpha=0.5)
-        # ax3.set_ylabel('RSI')
-        # ax3.set_ylim(0, 100)
-        # ax3.grid(True)
-        # ax3.legend(loc='upper left')
-
         self.figure.tight_layout()
         self.canvas.draw()
 
+    def calculate_indicators(self, data):
+        # Calculate SMA and Bollinger Bands
+        sma_20 = data['Close'].rolling(window=20).mean()
+        std_dev = data['Close'].rolling(window=20).std()
+        bollinger_upper = sma_20 + (std_dev * 2)
+        bollinger_lower = sma_20 - (std_dev * 2)
+
+        # Calculate RSI
+        rsi_indicator = ta.momentum.RSIIndicator(close=data['Close'], window=14)
+        rsi = rsi_indicator.rsi()
+
+        # Calculate MACD
+        macd_indicator = ta.trend.MACD(close=data['Close'])
+        macd = macd_indicator.macd()
+        signal = macd_indicator.macd_signal()
+
+        return sma_20, rsi, macd, signal, bollinger_upper, bollinger_lower
+
     def update_indicators(self, data):
-        sma_window = 20
-        sma = data['4. close'].rolling(window=sma_window).mean().iloc[-1]
+        if len(data) < 20:
+            self.indicators_text.delete(1.0, tk.END)
+            self.indicators_text.insert(tk.END, "Insufficient data to calculate indicators")
+            return
 
-        rsi_indicator = ta.momentum.RSIIndicator(close=data['4. close'], window=14)
-        rsi = rsi_indicator.rsi().iloc[-1]
+        sma_20, rsi, macd, signal, bollinger_upper, bollinger_lower = self.calculate_indicators(data)
 
-        exp1 = data['4. close'].ewm(span=12, adjust=False).mean()
-        exp2 = data['4. close'].ewm(span=26, adjust=False).mean()
-        macd_line = exp1 - exp2  # Keep the entire MACD Series
-        signal = macd_line.ewm(span=9, adjust=False).mean().iloc[-1] # Calculate signal on the MACD Series
-        macd = macd_line.iloc[-1] # Get the last MACD value
-
-        current_price = data['4. close'].iloc[-1]
-        prev_close = data['4. close'].iloc[-2]
+        current_price = data['Close'].iloc[-1]
+        prev_close = data['Close'].iloc[-2]
         price_change = ((current_price - prev_close) / prev_close) * 100
 
-        text = f"""Current Price: ${current_price:.2f} ({price_change:+.2f}%)\n\n"""
-        text += f"SMA ({sma_window}): ${sma:.2f}"
-        text += " (Bullish)" if current_price > sma else " (Bearish)"
+        indicators_text = f"Current Price: ₹{current_price:.2f} ({price_change:+.2f}%)\n\n"
+        indicators_text += f"SMA (20): ₹{sma_20.iloc[-1]:.2f}"
+        indicators_text += " (Bullish)" if current_price > sma_20.iloc[-1] else " (Bearish)"
 
-        text += f"\n\nRSI (14): {rsi:.2f}"
-        if rsi > 70:
-            text += " (Overbought - Consider Selling)"
-        elif rsi < 30:
-            text += " (Oversold - Consider Buying)"
+        indicators_text += f"\n\nBollinger Bands:"
+        indicators_text += f"\n  Upper: ₹{bollinger_upper.iloc[-1]:.2f}"
+        indicators_text += f"\n  Lower: ₹{bollinger_lower.iloc[-1]:.2f}"
+        if current_price > bollinger_upper.iloc[-1]:
+            indicators_text += " (Potentially Overbought)"
+        elif current_price < bollinger_lower.iloc[-1]:
+            indicators_text += " (Potentially Oversold)"
+
+        indicators_text += f"\n\nRSI (14): {rsi.iloc[-1]:.2f}"
+        if rsi.iloc[-1] > 70:
+            indicators_text += " (Overbought - Consider Selling)"
+        elif rsi.iloc[-1] < 30:
+            indicators_text += " (Oversold - Consider Buying)"
         else:
-            text += " (Neutral)"
+            indicators_text += " (Neutral)"
 
-        text += f"\n\nMACD: {macd:.2f}"
-        text += " (Bullish Signal)" if macd > signal else " (Bearish Signal)"
+        indicators_text += f"\n\nMACD: {macd.iloc[-1]:.2f}"
+        indicators_text += " (Bullish Signal)" if macd.iloc[-1] > signal.iloc[-1] else " (Bearish Signal)"
+
+        # Add trading volume analysis
+        avg_volume = data['Volume'].mean()
+        current_volume = data['Volume'].iloc[-1]
+        volume_ratio = (current_volume / avg_volume) * 100
+
+        indicators_text += f"\n\nVolume Analysis:"
+        indicators_text += f"\nCurrent Volume: {current_volume:,.0f}"
+        indicators_text += f"\nAverage Volume: {avg_volume:,.0f}"
+        indicators_text += f"\nVolume Ratio: {volume_ratio:.1f}% of Average"
 
         self.indicators_text.delete(1.0, tk.END)
-        self.indicators_text.insert(tk.END, text)
+        self.indicators_text.insert(tk.END, indicators_text)
 
     def analyze_stock(self):
         symbol = self.symbol_entry.get().upper()
@@ -200,21 +211,22 @@ class StockMarketGUI:
             self.plot_chart(data)
             self.update_indicators(data)
             self.nlp_func(symbol, data)
+        else:
+            messagebox.showerror("Error", f"Could not retrieve data for {symbol}")
 
     def nlp_func(self, symbol, data):
         try:
-            current_price = data['4. close'].iloc[-1]
-            rsi_indicator = ta.momentum.RSIIndicator(close=data['4. close'], window=14)
-            rsi = rsi_indicator.rsi().iloc[-1]
-            sentiment = "positive" if current_price > data['4. close'].iloc[-2] else "negative"
+            current_price = data['Close'].iloc[-1]
+            rsi_value = ta.momentum.RSIIndicator(close=data['Close'], window=14).rsi().iloc[-1]
+            sentiment = "positive" if current_price > data['Close'].iloc[-2] else "negative"
 
             response = f"""
                 🤖 ChatBot Analysis for {symbol}:
 
-                - The current stock price is ${current_price:.2f}.
+                - The current stock price is ₹{current_price:.2f}.
                 - The recent trend seems to be {sentiment}.
-                - The RSI is at {rsi:.2f}, indicating it is {"overbought" if rsi > 70 else "oversold" if rsi < 30 else "neutral"}.
-                - Based on this, you may want to {"wait for a dip" if rsi > 70 else "consider buying" if rsi < 30 else "hold your position"}.
+                - The RSI is at {rsi_value:.2f}, indicating it is {"overbought" if rsi_value > 70 else "oversold" if rsi_value < 30 else "neutral"}.
+                - Based on this, you may want to {"wait for a dip" if rsi_value > 70 else "consider buying" if rsi_value < 30 else "hold your position"}.
 
                 📊 I hope this helps! Type another query or click Analyze again.
             """
