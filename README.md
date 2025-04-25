@@ -1,33 +1,33 @@
 ```markdown
 # 📈 Stock Market Analysis Bot (Tkinter GUI)
 
-A Python desktop application that allows you to analyze stock data visually and statistically using **Tkinter GUI**, **yfinance**, and **technical indicators** (SMA, Bollinger Bands, RSI, MACD). Includes basic sentiment-style NLP feedback and interactive charts.
+A Python desktop application for visual and statistical stock data analysis using **Tkinter GUI**, **yfinance**, and technical indicators like **SMA**, **Bollinger Bands**, **RSI**, and **MACD**. Includes simple NLP-style market insights and interactive chart visualizations.
 
 ---
 
 ## 🧰 Features
 
-- 📊 Live stock data fetching from Yahoo Finance via `yfinance`
+- 📊 Live stock data fetching via `yfinance`
 - 🧮 Technical analysis indicators:
   - Simple Moving Average (SMA)
   - Bollinger Bands
   - Relative Strength Index (RSI)
-  - MACD and Signal Line
+  - MACD with Signal Line
 - 📉 Volume and price chart visualization using `matplotlib`
-- 🧠 Simple NLP-style insights based on market conditions
-- 🪟 Modern Tkinter GUI with tabbed interface
+- 🧠 Basic NLP-style insights based on market behavior
+- 🪟 Modern tabbed GUI interface built with `Tkinter`
 
 ---
 
 ## 🛠️ Requirements
 
-Install the dependencies using pip:
+Install the necessary dependencies with:
 
 ```bash
 pip install yfinance pandas matplotlib ta tabulate alphavantage
 ```
 
-> Tkinter comes preinstalled with Python in most distributions. If not:
+> **Note:** `Tkinter` usually comes pre-installed with Python. If not, install it using:
 > ```bash
 > sudo apt-get install python3-tk
 > ```
@@ -36,24 +36,26 @@ pip install yfinance pandas matplotlib ta tabulate alphavantage
 
 ## 🚀 How to Run
 
-Run the app using:
+Execute the application using:
 
 ```bash
 python Final_Yfinance.py
 ```
-or
+
+_or_
+
 ```bash
 python Final_AlphaVantage.py
 ```
----
 
+---
 
 ## 🔍 Usage
 
-1. Enter a stock symbol (e.g., `AAPL`, `TSLA`, `INFY.NS`).
-2. Select a time period (1d, 5d, 1mo, 3mo, 6mo, 1y).
-3. Click **Analyze**.
-4. View charts, indicators, and AI-generated insights.
+1. Enter a stock ticker (e.g., `AAPL`, `TSLA`, `INFY.NS`).
+2. Choose a time period (e.g., `1d`, `5d`, `1mo`, `6mo`, `1y`).
+3. Click **Analyze** to generate insights.
+4. Explore generated charts, indicators, and NLP feedback.
 
 ---
 
@@ -61,20 +63,21 @@ python Final_AlphaVantage.py
 
 ```
 .
-├── Final_AlphaVantage.py     # Main application file
-├── Final_Yfinance.py     # Main application file
-├── README.md             # This file
+├── Final_AlphaVantage.py     # Alpha Vantage version of the app
+├── Final_Yfinance.py         # yFinance version of the app
+├── README.md                 # Project documentation
 ```
 
 ---
 
 ## 💡 Notes
 
-- The default currency conversion (USD to INR) is set at 82.5 manually.
-- For more advanced AI insights, consider integrating real-time NLP models or financial APIs.
+- Default USD to INR currency conversion is set manually to `82.5`.
+- For advanced AI-driven insights, consider integrating with real-time NLP or financial APIs.
 
 ---
 
-## 🧑‍💻 Author
+## 🧑‍💻 Authors
 
-Developed by [Sohrab Pritpal Singh, Harshit Sharma, Arnav Sinha]
+Developed by **Sohrab Pritpal Singh**, **Harshit Sharma**, and **Arnav Sinha**
+```
