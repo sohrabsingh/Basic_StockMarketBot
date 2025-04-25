@@ -1,4 +1,3 @@
-```markdown
 # 📈 Stock Market Analysis Bot (Tkinter GUI)
 
 A Python desktop application for visual and statistical stock data analysis using **Tkinter GUI**, **yfinance**, and technical indicators like **SMA**, **Bollinger Bands**, **RSI**, and **MACD**. Includes simple NLP-style market insights and interactive chart visualizations.
@@ -80,4 +79,3 @@ python Final_AlphaVantage.py
 ## 🧑‍💻 Authors
 
 Developed by **Sohrab Pritpal Singh**, **Harshit Sharma**, and **Arnav Sinha**
-```
