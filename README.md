@@ -78,4 +78,3 @@ python Final_AlphaVantage.py
 ## 🧑‍💻 Author
 
 Developed by [Sohrab Pritpal Singh, Harshit Sharma, Arnav Sinha]
-```
