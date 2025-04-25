@@ -1,5 +1,3 @@
----
-
 ```markdown
 # 📈 Stock Market Analysis Bot (Tkinter GUI)
 
