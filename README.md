@@ -1,5 +1,3 @@
-Here’s a well-formatted `README.md` file for your **Tkinter-based Stock Market Analysis Tool** using `yfinance`, `ta`, and `matplotlib`.
-
 ---
 
 ```markdown
@@ -28,7 +26,7 @@ A Python desktop application that allows you to analyze stock data visually and 
 Install the dependencies using pip:
 
 ```bash
-pip install yfinance pandas matplotlib ta tabulate
+pip install yfinance pandas matplotlib ta tabulate alphavantage
 ```
 
 > Tkinter comes preinstalled with Python in most distributions. If not:
@@ -45,16 +43,12 @@ Run the app using:
 ```bash
 python Final_Yfinance.py
 ```
-
+or
+```bash
+python Final_AlphaVantage.py
+```
 ---
 
-## 📸 Screenshots
-
-| 📈 Price Chart | 📉 Technical Indicators | 🧠 Insights |
-|----------------|-------------------------|-------------|
-| (Include your screenshots here if available) |
-
----
 
 ## 🔍 Usage
 
@@ -69,6 +63,7 @@ python Final_Yfinance.py
 
 ```
 .
+├── Final_AlphaVantage.py     # Main application file
 ├── Final_Yfinance.py     # Main application file
 ├── README.md             # This file
 ```
@@ -84,8 +79,6 @@ python Final_Yfinance.py
 
 ## 🧑‍💻 Author
 
-Developed by [Your Name Here]
+Developed by [Sohrab Pritpal Singh, Harshit SHarma, Arnav Sinha]
 
 ---
-
-## 📄 License
