@@ -82,3 +82,4 @@ python Final_AlphaVantage.py
 Developed by [Sohrab Pritpal Singh, Harshit SHarma, Arnav Sinha]
 
 ---
+```
